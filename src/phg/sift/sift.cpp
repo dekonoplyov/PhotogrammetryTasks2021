@@ -177,9 +177,10 @@ namespace {
         float a = (x2-2.0f*x1+x0) / 2.0f;
         float b = x1 - x0 - a;
         float c = x0;
+        float extremum = - b / (2.0f * a);
         // extremum is at -b/(2*a), but our system coordinate start (i) is at 1, so minus 1
-        float axisShift = - b / (2.0f * a) - 1.0f;
-        float valueShift = (a * axisShift * axisShift + b * axisShift + c) - x1;
+        float axisShift = extremum - 1.0f;
+        float valueShift = (a * extremum * extremum + b * extremum + c) - x1;
         return Shift{axisShift, valueShift};
     }
 
@@ -265,7 +266,7 @@ void phg::SIFT::findLocalExtremasAndDescribe(const std::vector<cv::Mat> &gaussia
                             const auto yShift = parabolaFitting(DoGs[1].at<float>(j - 1, i), center, DoGs[1].at<float>(j + 1, i));
                             dx = xShift.axis;
                             dy = yShift.axis;
-                            dvalue = xShift.value + yShift.value;
+                            dvalue = (xShift.value + yShift.value) / 2;
                         }
 #endif
                         // TODO сделать фильтрацию слабых точек по слабому контрасту
