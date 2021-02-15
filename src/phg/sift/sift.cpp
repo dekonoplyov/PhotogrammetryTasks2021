@@ -190,13 +190,13 @@ namespace {
 
     // assume that border is checked
     PolarCoord calcPolarCoord(const cv::Mat& img, int x, int y) {
-        const float left = img.at<float>(x - 1, y);
-        const float right = img.at<float>(x + 1, y);
-        const float bottom = img.at<float>(x, y - 1);
-        const float top = img.at<float>(x, y + 1);
+        const float left = img.at<float>(y, x - 1);
+        const float right = img.at<float>(y, x + 1);
+        const float bottom = img.at<float>(y - 1, x);
+        const float top = img.at<float>(y + 1, x);
         const float dx = right - left;
         const float dy = top - bottom;
-        const float magnitude = dx*dx + dy*dy;
+        const float magnitude = sqrt(dx*dx + dy*dy);
 
         // orientation == theta
         // atan( (L(x, y + 1) − L(x, y − 1)) / (L(x + 1, y) − L(x − 1, y)) )
@@ -297,7 +297,7 @@ void phg::SIFT::findLocalExtremasAndDescribe(const std::vector<cv::Mat> &gaussia
                                 // TODO добавьте уточнение угла наклона - может помочь определенная выше функция parabolaFitting(float x0, float x1, float x2)
                                 kp.angle = (bin + 0.5f + parabolaFitting(prevValue, value, nextValue).axis) * (360.0f / ORIENTATION_NHISTS);
                                 rassert(kp.angle >= 0.0 && kp.angle <= 360.0, 123512412412);
-                                
+
                                 std::vector<float> descriptor;
                                 double descrSampleRadius = (DESCRIPTOR_SAMPLE_WINDOW_R * (1.0 + k * (layer - 1)));
                                 if (!buildDescriptor(img, kp.pt.x, kp.pt.y, descrSampleRadius, kp.angle, descriptor))
@@ -394,7 +394,10 @@ bool phg::SIFT::buildDescriptor(const cv::Mat &img, float px, float py, double d
                               // мы уже повернули в relativeShiftRotation
                             static_assert(360 % DESCRIPTOR_NBINS == 0, "Inappropriate bins number!");
                             const auto coord = calcPolarCoord(img, x, y);
-                            const auto bin = static_cast<size_t>(floor(coord.orientation)) % DESCRIPTOR_NBINS;
+                            float orientation = coord.orientation - angle;
+                            if (orientation <  0.0f)   orientation += 360.0f;
+                            if (orientation >= 360.0f) orientation -= 360.0f;
+                            const auto bin = static_cast<size_t>(floor(orientation)) % DESCRIPTOR_NBINS;
                             rassert(bin < DESCRIPTOR_NBINS, 361236315614);
                             sum[bin] += coord.magnitude;
                             // TODO хорошая идея добавить трилинейную интерполяцию как предложено в статье, или хотя бы сэмулировать ее - сгладить получившиеся гистограммы
