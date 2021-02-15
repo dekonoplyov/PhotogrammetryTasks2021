@@ -347,7 +347,8 @@ bool phg::SIFT::buildLocalOrientationHists(const cv::Mat &img, size_t i, size_t 
             // m(x, y)=(L(x + 1, y) − L(x − 1, y))^2 + (L(x, y + 1) − L(x, y − 1))^2
             const auto coord = calcPolarCoord(img, x, y);
             static_assert(360 % ORIENTATION_NHISTS == 0, "Inappropriate bins number!");
-            const auto bin = static_cast<size_t>(floor(coord.orientation)) % ORIENTATION_NHISTS;
+            const float binW = 360.0 / ORIENTATION_NHISTS;
+            const auto bin = static_cast<size_t>(coord.orientation / binW);
             rassert(bin < ORIENTATION_NHISTS, 361236315613);
             sum[bin] += static_cast<float>(coord.magnitude);
             // TODO может быть сгладить получившиеся гистограммы улучшит результат?
@@ -388,7 +389,7 @@ bool phg::SIFT::buildDescriptor(const cv::Mat &img, float px, float py, double d
                             int x = (int) (px + shift.x);
                             int y = (int) (py + shift.y);
 
-                            if (y - 1 < 0 || y + 1 > img.rows || x - 1 < 0 || x + 1 > img.cols)
+                            if (y - 1 < 0 || y + 1 >= img.rows || x - 1 < 0 || x + 1 >= img.cols)
                                 return false;
 
                               // TODO за счет чего этот вклад будет сравниваться с этим же вкладом даже если эта картинка будет повернута? что нужно сделать с ориентацией каждого градиента из окрестности этой ключевой точки?
@@ -398,7 +399,8 @@ bool phg::SIFT::buildDescriptor(const cv::Mat &img, float px, float py, double d
                             float orientation = coord.orientation - angle;
                             if (orientation <  0.0f)   orientation += 360.0f;
                             if (orientation >= 360.0f) orientation -= 360.0f;
-                            const auto bin = static_cast<size_t>(floor(orientation)) % DESCRIPTOR_NBINS;
+                            const float binW = 360.0 / DESCRIPTOR_NBINS;
+                            const auto bin = static_cast<size_t>(orientation / binW);
                             rassert(bin < DESCRIPTOR_NBINS, 361236315614);
                             sum[bin] += coord.magnitude;
                             // TODO хорошая идея добавить трилинейную интерполяцию как предложено в статье, или хотя бы сэмулировать ее - сгладить получившиеся гистограммы
