@@ -3,19 +3,26 @@
 #include <opencv2/flann/miniflann.hpp>
 #include "flann_factory.h"
 
-void phg::DescriptorMatcher::filterMatchesRatioTest(const std::vector<std::vector<cv::DMatch>> &matches,
-                                                    std::vector<cv::DMatch> &filtered_matches)
+// matches dim is [N x 2], 2 best matches for ratio test
+void phg::DescriptorMatcher::filterMatchesRatioTest(const std::vector<std::vector<cv::DMatch>>& matches,
+                                                    std::vector<cv::DMatch>& filtered_matches)
 {
     filtered_matches.clear();
 
-    throw std::runtime_error("not implemented yet");
+    const float RATIO = 0.7f;
+
+    for (const auto& twoBest : matches) {
+        if (twoBest[0].distance / twoBest[1].distance <= RATIO) {
+            filtered_matches.push_back(twoBest[0]);
+        }
+    }
 }
 
 
-void phg::DescriptorMatcher::filterMatchesClusters(const std::vector<cv::DMatch> &matches,
+void phg::DescriptorMatcher::filterMatchesClusters(const std::vector<cv::DMatch>& matches,
                                                    const std::vector<cv::KeyPoint> keypoints_query,
                                                    const std::vector<cv::KeyPoint> keypoints_train,
-                                                   std::vector<cv::DMatch> &filtered_matches)
+                                                   std::vector<cv::DMatch>& filtered_matches)
 {
     filtered_matches.clear();
 
@@ -35,42 +42,64 @@ void phg::DescriptorMatcher::filterMatchesClusters(const std::vector<cv::DMatch>
         points_query.at<cv::Point2f>(i) = keypoints_query[matches[i].queryIdx].pt;
         points_train.at<cv::Point2f>(i) = keypoints_train[matches[i].trainIdx].pt;
     }
-//
-//    // размерность всего 2, так что точное KD-дерево
-//    std::shared_ptr<cv::flann::IndexParams> index_params = flannKdTreeIndexParams(TODO);
-//    std::shared_ptr<cv::flann::SearchParams> search_params = flannKsTreeSearchParams(TODO);
-//
-//    std::shared_ptr<cv::flann::Index> index_query = flannKdTreeIndex(points_query, index_params);
-//    std::shared_ptr<cv::flann::Index> index_train = flannKdTreeIndex(points_train, index_params);
-//
-//    // для каждой точки найти total neighbors ближайших соседей
-//    cv::Mat indices_query(n_matches, total_neighbours, CV_32SC1);
-//    cv::Mat distances2_query(n_matches, total_neighbours, CV_32FC1);
-//    cv::Mat indices_train(n_matches, total_neighbours, CV_32SC1);
-//    cv::Mat distances2_train(n_matches, total_neighbours, CV_32FC1);
-//
-//    index_query->knnSearch(points_query, indices_query, distances2_query, total_neighbours, *search_params);
-//    index_train->knnSearch(points_train, indices_train, distances2_train, total_neighbours, *search_params);
-//
-//    // оценить радиус поиска для каждой картинки
-//    // NB: radius2_query, radius2_train: квадраты радиуса!
-//    float radius2_query, radius2_train;
-//    {
-//        std::vector<double> max_dists2_query(n_matches);
-//        std::vector<double> max_dists2_train(n_matches);
-//        for (int i = 0; i < n_matches; ++i) {
-//            max_dists2_query[i] = distances2_query.at<float>(i, total_neighbours - 1);
-//            max_dists2_train[i] = distances2_train.at<float>(i, total_neighbours - 1);
-//        }
-//
-//        int median_pos = n_matches / 2;
-//        std::nth_element(max_dists2_query.begin(), max_dists2_query.begin() + median_pos, max_dists2_query.end());
-//        std::nth_element(max_dists2_train.begin(), max_dists2_train.begin() + median_pos, max_dists2_train.end());
-//
-//        radius2_query = max_dists2_query[median_pos] * radius_limit_scale * radius_limit_scale;
-//        radius2_train = max_dists2_train[median_pos] * radius_limit_scale * radius_limit_scale;
-//    }
-//
+
+    // размерность всего 2, так что точное KD-дерево
+    std::shared_ptr<cv::flann::IndexParams> index_params = flannKdTreeIndexParams();
+    std::shared_ptr<cv::flann::SearchParams> search_params = flannKsTreeSearchParams();
+
+    std::shared_ptr<cv::flann::Index> index_query = flannKdTreeIndex(points_query, index_params);
+    std::shared_ptr<cv::flann::Index> index_train = flannKdTreeIndex(points_train, index_params);
+
+    // для каждой точки найти total neighbors ближайших соседей
+    cv::Mat indices_query(n_matches, total_neighbours, CV_32SC1); // [N x 5]
+    cv::Mat distances2_query(n_matches, total_neighbours, CV_32FC1);
+    cv::Mat indices_train(n_matches, total_neighbours, CV_32SC1);
+    cv::Mat distances2_train(n_matches, total_neighbours, CV_32FC1);
+
+    index_query->knnSearch(points_query, indices_query, distances2_query, total_neighbours, *search_params);
+    index_train->knnSearch(points_train, indices_train, distances2_train, total_neighbours, *search_params);
+
+    // оценить радиус поиска для каждой картинки
+    // NB: radius2_query, radius2_train: квадраты радиуса!
+    float radius2_query, radius2_train;
+    {
+        std::vector<float> max_dists2_query(n_matches);
+        std::vector<float> max_dists2_train(n_matches);
+        for (int i = 0; i < n_matches; ++i) {
+            // distances are sorted
+            max_dists2_query[i] = distances2_query.at<float>(i, total_neighbours - 1);
+            max_dists2_train[i] = distances2_train.at<float>(i, total_neighbours - 1);
+        }
+
+        int median_pos = n_matches / 2;
+        std::nth_element(max_dists2_query.begin(), max_dists2_query.begin() + median_pos, max_dists2_query.end());
+        std::nth_element(max_dists2_train.begin(), max_dists2_train.begin() + median_pos, max_dists2_train.end());
+
+        radius2_query = max_dists2_query[median_pos] * radius_limit_scale * radius_limit_scale;
+        radius2_train = max_dists2_train[median_pos] * radius_limit_scale * radius_limit_scale;
+    }
+
 //    метч остается, если левое и правое множества первых total_neighbors соседей в радиусах поиска(radius2_query, radius2_train) имеют как минимум consistent_matches общих элементов
 //    // TODO заполнить filtered_matches
+    for (int i = 0; i < n_matches; ++i) {
+        std::set<int> ind_query;
+        std::set<int> ind_train;
+
+        for (int j = 0; j < total_neighbours; ++j) {
+            if (distances2_query.at<float>(i, j) < radius2_query) {
+                ind_query.insert(indices_query.at<int>(i, j));
+            }
+            if (distances2_train.at<float>(i, j) < radius2_train) {
+                ind_train.insert(indices_train.at<int>(i, j));
+            }
+        }
+
+        std::vector<int> intersection;
+        std::set_intersection(ind_query.begin(), ind_query.end(),
+                              ind_train.begin(), ind_train.end(),
+                              std::back_inserter(intersection));
+        if (intersection.size() >= consistent_matches) {
+            filtered_matches.push_back(matches[i]);
+        }
+    }
 }
