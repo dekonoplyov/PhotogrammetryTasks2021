@@ -173,7 +173,7 @@ namespace {
         // https://en.wikipedia.org/wiki/Random_sample_consensus#Parameters
         const int n_trials = 100;
 
-        const int n_samples = 5;
+        const int n_samples = 4;
         uint64_t seed = 1;
         const double reprojection_error_threshold_px = 2;
 
