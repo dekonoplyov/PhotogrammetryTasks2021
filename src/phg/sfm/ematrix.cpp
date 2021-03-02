@@ -18,8 +18,15 @@ namespace {
         copy(Ecv, E);
 
         Eigen::JacobiSVD<Eigen::MatrixXd> svd(E, Eigen::ComputeFullU | Eigen::ComputeFullV);
-        throw std::runtime_error("not implemented yet");
-// TODO
+
+        const double s = svd.singularValues()(0);
+
+        Eigen::MatrixXd S(3, 3);
+        S << s,   0.0, 0.0,
+             0.0, s,   0.0,
+             0.0, 0.0, 0.0;
+
+        E = svd.matrixU() * S * svd.matrixV().transpose();
 
         copy(E, Ecv);
     }
@@ -28,12 +35,11 @@ namespace {
 
 cv::Matx33d phg::fmatrix2ematrix(const cv::Matx33d &F, const phg::Calibration &calib0, const phg::Calibration &calib1)
 {
-    throw std::runtime_error("not implemented yet");
-//    matrix3d E = TODO;
-//
-//    ensureSpectralProperty(E);
-//
-//    return E;
+    matrix3d E = calib1.K().t() * F * calib0.K();
+
+    ensureSpectralProperty(E);
+
+    return E;
 }
 
 namespace {
@@ -59,7 +65,9 @@ namespace {
         return result;
     }
 
-    double getDepth(const vector2d &m0, const vector2d &m1, const phg::Calibration &calib0, const phg::Calibration &calib1, const matrix34d &P0, const matrix34d &P1)
+    double getDepth(const vector2d &m0, const vector2d &m1,
+                    const phg::Calibration &calib0, const phg::Calibration &calib1,
+                    const matrix34d &P0, const matrix34d &P1)
     {
         throw std::runtime_error("not implemented yet");
 //        vector3d p0 = TODO;
@@ -84,34 +92,45 @@ namespace {
 // Это дополнительное ограничение позволяет разложить существенную матрицу с точностью до 4 решений, вместо произвольного проективного преобразования (см. Hartley & Zisserman p.258)
 // Обычно мы можем использовать одну общую калибровку, более менее верную для большого количества реальных камер и с ее помощью выполнить
 // первичное разложение существенной матрицы (а из него, взаимное расположение камер) для последующего уточнения методом нелинейной оптимизации
-void phg::decomposeEMatrix(cv::Matx34d &P0, cv::Matx34d &P1, const cv::Matx33d &Ecv, const std::vector<cv::Vec2d> &m0, const std::vector<cv::Vec2d> &m1, const Calibration &calib0, const Calibration &calib1)
+void phg::decomposeEMatrix(cv::Matx34d &P0, cv::Matx34d &P1, const cv::Matx33d &Ecv,
+                           const std::vector<cv::Vec2d> &m0, const std::vector<cv::Vec2d> &m1,
+                           const Calibration &calib0, const Calibration &calib1)
 {
-    throw std::runtime_error("not implemented yet");
-//    if (m0.size() != m1.size()) {
-//        throw std::runtime_error("decomposeEMatrix : m0.size() != m1.size()");
-//    }
-//
-//    using mat = Eigen::MatrixXd;
-//    using vec = Eigen::VectorXd;
-//
-//    mat E;
-//    copy(Ecv, E);
-//
-//    // (см. Hartley & Zisserman p.258)
-//
-//    Eigen::JacobiSVD<mat> svd(E, Eigen::ComputeFullU | Eigen::ComputeFullV);
-//
-//    mat U = svd.matrixU();
-//    vec s = svd.singularValues();
-//    mat V = svd.matrixV();
-//
-//    // U, V must be rotation matrices, not just orthogonal
-//    if (U.determinant() < 0) U = -U;
-//    if (V.determinant() < 0) V = -V;
-//
-//    std::cout << "U:\n" << U << std::endl;
-//    std::cout << "s:\n" << s << std::endl;
-//    std::cout << "V:\n" << V << std::endl;
+    if (m0.size() != m1.size()) {
+        throw std::runtime_error("decomposeEMatrix : m0.size() != m1.size()");
+    }
+
+    using mat = Eigen::MatrixXd;
+    using vec = Eigen::VectorXd;
+
+    mat E;
+    copy(Ecv, E);
+
+    // (см. Hartley & Zisserman p.258)
+
+    Eigen::JacobiSVD<mat> svd(E, Eigen::ComputeFullU | Eigen::ComputeFullV);
+
+    mat U = svd.matrixU();
+    vec s = svd.singularValues();
+    mat V = svd.matrixV();
+
+    // U, V must be rotation matrices, not just orthogonal
+    if (U.determinant() < 0) U = -U;
+    if (V.determinant() < 0) V = -V;
+
+    std::cout << "U:\n" << U << std::endl;
+    std::cout << "s:\n" << s << std::endl;
+    std::cout << "V:\n" << V << std::endl;
+
+    mat W;
+    W << 0, -1, 0,
+         1,  0, 0,
+         0,  0, 1;
+
+    mat Z;
+    Z << 0, 1, 0,
+        -1, 0, 0,
+         0, 0, 0;
 //
 //
 //    mat R0 = TODO;
