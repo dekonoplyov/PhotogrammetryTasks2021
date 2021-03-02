@@ -19,11 +19,9 @@ namespace {
 
         Eigen::JacobiSVD<Eigen::MatrixXd> svd(E, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
-        const double s = svd.singularValues()(0);
-
         Eigen::MatrixXd S(3, 3);
-        S << s,   0.0, 0.0,
-             0.0, s,   0.0,
+        S << 1.0, 0.0, 0.0,
+             0.0, 1.0, 0.0,
              0.0, 0.0, 0.0;
 
         E = svd.matrixU() * S * svd.matrixV().transpose();

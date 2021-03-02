@@ -46,7 +46,7 @@ namespace {
         }
 
         Eigen::JacobiSVD<Eigen::MatrixXd> svda(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
-        Eigen::VectorXd null_space = svda.matrixV().transpose().row(a_rows - 1);
+        Eigen::VectorXd null_space = svda.matrixV().transpose().row(a_cols - 1);
 
         Eigen::MatrixXd F(3, 3);
         F.row(0) << null_space[0], null_space[1], null_space[2];
@@ -155,7 +155,7 @@ namespace {
         }
         // https://en.wikipedia.org/wiki/Random_sample_consensus#Parameters
         // будет отличаться от случая с гомографией
-        const int n_trials = 1000;
+        const int n_trials = 10000;
 
         // it said that 7 at least but there is The normalized 8-point algorithm
         const int n_samples = 8;
@@ -225,7 +225,7 @@ cv::Matx33d phg::composeFMatrix(const cv::Matx34d &P0, const cv::Matx34d &P1)
 {
     // compute fundamental matrix from general cameras
     // Hartley & Zisserman (17.3 - p412)
-    
+
     cv::Matx33d F;
 
 #define det4(a, b, c, d) \
@@ -249,6 +249,6 @@ cv::Matx33d phg::composeFMatrix(const cv::Matx34d &P0, const cv::Matx34d &P1)
         }
 
 #undef det4
-    
+
     return F;
 }

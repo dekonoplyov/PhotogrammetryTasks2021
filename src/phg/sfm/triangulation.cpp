@@ -20,19 +20,20 @@ cv::Vec4d phg::triangulatePoint(const cv::Matx34d *Ps, const cv::Vec3d *ms, int 
     for (int i = 0; i < count; ++i) {
         double x = ms[i][0];
         double y = ms[i][1];
+        double z = ms[i][1];
 
         const auto& p0 = Ps[i].row(0);
         const auto& p1 = Ps[i].row(1);
         const auto& p2 = Ps[i].row(2);
 
-        const auto r0 = x * p2 - p0;
-        const auto r1 = y * p2 - p1;
+        const auto r0 = x * p2 - z * p0;
+        const auto r1 = y * p2 - z * p1;
         A.row(2 * i) << r0(0), r0(1), r0(2), r0(3);
         A.row(2 * i + 1) << r1(0), r1(1), r1(2), r1(3);
     }
 
     Eigen::JacobiSVD<Eigen::MatrixXd> svda(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
-    Eigen::VectorXd sol = svda.matrixV().transpose().row(a_rows - 1);
+    Eigen::VectorXd sol = svda.matrixV().transpose().row(a_cols - 1);
 
     return cv::Vec4d{sol[0], sol[1], sol[2], sol[3]};
 }
