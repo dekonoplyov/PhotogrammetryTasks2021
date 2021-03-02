@@ -120,7 +120,7 @@ namespace {
             int support = 0;
             for (int i = 0; i < n_points; ++i) {
                 const auto px3d = calib.project(P * cv::Vec4d(X[i][0], X[i][1], X[i][2], 1.0));
-                cv::Vec2d px{px3d[0], px3d[1]};
+                cv::Vec2d px{px3d[0]/px3d[2], px3d[1]/px3d[2]};
                 if (cv::norm(px - x[i]) < threshold_px) {
                     ++support;
                 }
