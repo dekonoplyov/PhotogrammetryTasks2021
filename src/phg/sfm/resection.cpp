@@ -75,9 +75,10 @@ namespace {
         Eigen::VectorXd null_space = svda.matrixV().transpose().row(a_cols - 1);
 
         matrix34d result;
-        result.row(0) << null_space[0], null_space[1], null_space[2], null_space[3];
-        result.row(1) << null_space[4], null_space[5], null_space[6], null_space[7];
-        result.row(2) << null_space[8], null_space[9], null_space[10], null_space[11];
+
+        result(0, 0) = null_space(0);result(0, 1) = null_space(1);result(0, 2) = null_space(2);result(0, 3) = null_space(3);
+        result(1, 0) = null_space(4);result(1, 1) = null_space(5);result(1, 2) = null_space(6);result(1, 3) = null_space(7);
+        result(2, 0) = null_space(8);result(2, 1) = null_space(9);result(2, 2) = null_space(10);result(2, 3) = null_space(11);
 
         return canonicalizeP(result);
     }
