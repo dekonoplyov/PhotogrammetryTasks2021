@@ -79,7 +79,7 @@ namespace {
             X /= X[3];
         }
 
-        return X[2];
+        return (Ps[0] * X)(2) >= 0 && (Ps[1] * X)(2) >= 0;
     }
 }
 
