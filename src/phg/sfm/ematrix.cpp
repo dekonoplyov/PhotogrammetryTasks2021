@@ -79,7 +79,9 @@ namespace {
             X /= X[3];
         }
 
-        return (Ps[0] * X)(2) >= 0 && (Ps[1] * X)(2) >= 0;
+        double depth0 = calib0.unproject(m0).dot(P0 * X);
+        double depth1 = calib1.unproject(m1).dot(P1 * X);
+        return depth0 > 0 && depth1 > 0;
     }
 }
 

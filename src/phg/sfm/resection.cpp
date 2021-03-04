@@ -52,7 +52,7 @@ namespace {
         using mat = Eigen::MatrixXd;
         using vec = Eigen::VectorXd;
 
-        int a_rows = 2 * count;
+        int a_rows = 11;
         int a_cols = 12;
         mat A(a_rows, a_cols);
 
@@ -68,11 +68,14 @@ namespace {
             double W = 1.0;
 
             A.row(2 * i) << 0, 0, 0, 0, -w*X, -w*Y, -w*Z, -w*W, y*X, y*Y, y*Z, y*W;
-            A.row(2 * i + 1) << w*X, w*Y, w*Z, w*W, 0, 0, 0, 0, -x*X, -x*Y, -x*Z, -x*W;;
+            if ((2 * i + 1) == 11) {
+                break;
+            }
+            A.row(2 * i + 1) << w*X, w*Y, w*Z, w*W, 0, 0, 0, 0, -x*X, -x*Y, -x*Z, -x*W;
         }
 
         Eigen::JacobiSVD<Eigen::MatrixXd> svda(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
-        Eigen::VectorXd null_space = svda.matrixV().transpose().row(a_cols - 1);
+        Eigen::VectorXd null_space = svda.matrixV().col(a_cols - 1);
 
         matrix34d result;
 
