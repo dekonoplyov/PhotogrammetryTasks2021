@@ -247,7 +247,7 @@ TEST (CeresSolver, HelloWorld2) {
 // Сначала надо определить функтор находящий расстояние от конкретной точки-сэмпла до нашей искомой прямой:
 class PointObservationError {
 public:
-    PointObservationError(const double point[2]) {
+    PointObservationError(const std::array<double, 2> point) {
         for (int d = 0; d < 2; ++d) {
             samplePoint[d] = point[d];
         }
@@ -276,7 +276,7 @@ double calcDistanceToLine2D(double x, double y, const double* abc) {
     return dist;
 }
 
-void evaluateLine(const std::vector<double[2]> &points, const double* line, double sigma, double &fitted_inliers_fraction, double &mean_inliers_distance);
+void evaluateLine(const std::vector<std::array<double, 2>> &points, const double* line, double sigma, double &fitted_inliers_fraction, double &mean_inliers_distance);
 
 void evaluateLineFitting(double sigma, double &fitted_inliers_fraction, double &mean_inliers_distance, double outliers_fraction=0.0, bool use_huber=false) {
     const double ideal_line[3] = {0.5, -1.0, 100.0}; // 0.5*x - y + 100 = 0
@@ -284,7 +284,7 @@ void evaluateLineFitting(double sigma, double &fitted_inliers_fraction, double &
     const size_t n_points = 1000;
     const size_t n_points_outliers = (size_t) (n_points * outliers_fraction);
 
-    std::vector<double[2]> points(n_points);
+    std::vector<std::array<double, 2>> points(n_points);
 
     std::default_random_engine r(212512512391);
 
@@ -396,7 +396,7 @@ void evaluateLineFitting(double sigma, double &fitted_inliers_fraction, double &
     }
 }
 
-void evaluateLine(const std::vector<double[2]> &points, const double* line,
+void evaluateLine(const std::vector<std::array<double, 2>> &points, const double* line,
                   double sigma, double &fitted_inliers_fraction, double &mse_inliers_distance) {
     size_t n = points.size();
     size_t inliers = 0;

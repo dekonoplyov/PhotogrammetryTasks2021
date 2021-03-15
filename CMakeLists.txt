@@ -125,9 +125,18 @@ convertIntoHeader(src/phg/matching/cl/bruteforce_matcher.cl src/phg/matching/cl/
 # Обратите внимание что это происходит на этапе компиляции, кроме того необходимо чтобы файл bruteforce_matcher_cl.h был перечислен среди исходников для компиляции при вызове add_executable
 set(SOURCES ${SOURCES} src/phg/matching/cl/bruteforce_matcher_cl.h)
 
+# Found this in kpilyugin repo
+# Add this to CMake options.
+# Clion: Preferences -> Build, Exec... -> CMake
+# macOS:
+# -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp -I/usr/local/opt/libomp/include"
+# -DOpenMP_CXX_LIB_NAMES="omp"
+# -DOpenMP_omp_LIBRARY=/usr/local/opt/libomp/lib/libomp.dylib
+
 set(LIBRARIES
         libutils
         ${OpenCV_LIBS}
+        ${OpenMP_CXX_LIBRARIES}
         Eigen3::Eigen
         Ceres::ceres
         )
