@@ -67,7 +67,6 @@ TEST (CeresSolver, HelloWorld1) {
     std::cout << "f(x):  " << initial_residual << " -> " << final_residual << std::endl;
     std::cout << "f'(x): " << initial_jacobian << " -> " << final_jacobian << std::endl;
     // TODO 1: почему результирующая производная не ноль? мы ведь должны были сойтись в минимуме функции 0.5*(10-x)^2
-    // хз
 
     ASSERT_NEAR(cur_x, 10.0, 1e-6);
 }
