@@ -403,8 +403,8 @@ public:
         ceres::AngleAxisRotatePoint(rotation, point_t, point_r);
 
         // Проецируем точку на фокальную плоскость матрицы (т.е. плоскость Z=фокальная длина), тем самым переводя в пиксели
-        T x = point_r[0] / point_r[2];
-        T y = point_r[1] / point_r[2];
+        T x = f * point_r[0] / point_r[2];
+        T y = f * point_r[1] / point_r[2];
 
 #if ENABLE_INSTRINSICS_K1_K2
         // k1, k2 - коэффициенты радиального искажения (radial distortion)
@@ -423,9 +423,7 @@ public:
         // Теперь по спроецированным координатам не забудьте посчитать невязку репроекции
         residuals[0] = x - observed_x;
         residuals[1] = y - observed_y;
-
         return true;
-        // TODO сверьте эту функцию с вашей реализацией проекции в src/phg/core/calibration.cpp (они должны совпадать)
     }
 protected:
     double observed_x;
@@ -676,7 +674,7 @@ void runBA(std::vector<vector3d> &tie_points,
                 }
             }
 
-            if (ENABLE_OUTLIERS_FILTRATION_COLINEAR && ENABLE_BA) {
+            if (ENABLE_OUTLIERS_FILTRATION_COLINEAR && ENABLE_BA && camera_id != 0) {
                 // TODO выполните проверку случая когда два луча почти параллельны, чтобы не было странных точек улетающих на бесконечность (например чтобы угол был хотя бы 2.5 градуса)
                 vector3d ray0 = cv::normalize(track_point - first_camera_origin);
                 vector3d ray1 = cv::normalize(track_point - camera_origin);
